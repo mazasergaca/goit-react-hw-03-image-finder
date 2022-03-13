@@ -1,13 +1,12 @@
 import { Component } from 'react';
-
+import PropTypes from 'prop-types';
+import { toast } from 'react-toastify';
 import { BallTriangle } from 'react-loader-spinner';
 import ImageGalleryItem from 'components/ImageGalleryItem';
-
+import imagesAPI from '../../services/images-api';
 import Button from 'components/Button';
 import s from './ImageGallery.module.css';
 import Modal from 'components/Modal';
-
-const API_KEY = '25910562-a2104437e4307ded07a843390';
 
 export default class ImageGallery extends Component {
   state = {
@@ -23,12 +22,8 @@ export default class ImageGallery extends Component {
   async componentDidUpdate(prevProps) {
     if (prevProps.searchName !== this.props.searchName) {
       await this.setState({ status: 'pending', page: 1 });
-      fetch(
-        `https://pixabay.com/api/?q=${this.props.searchName}&page=${this.state.page}&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=12`
-      )
-        .then(res => {
-          return res.json();
-        })
+      imagesAPI
+        .fetchImages(this.props.searchName, this.state.page)
         .then(images => {
           if (images.hits.length !== 0) {
             return this.setState({
@@ -38,10 +33,11 @@ export default class ImageGallery extends Component {
             });
           }
           return Promise.reject(
-            new Error(`Ничего не найдено по запросу ${this.props.searchName}`)
+            new Error(`No results were found for '${this.props.searchName}'`)
           );
         })
         .catch(error => {
+          toast.error('Enter another text');
           this.setState({ error, status: 'rejected' });
         });
     }
@@ -62,23 +58,14 @@ export default class ImageGallery extends Component {
       page: prevState.page + 1,
       visibleButton: false,
     }));
-    await fetch(
-      `https://pixabay.com/api/?q=${this.props.searchName}&page=${this.state.page}&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=12`
-    )
-      .then(res => {
-        return res.json();
-      })
+    await imagesAPI
+      .fetchImages(this.props.searchName, this.state.page)
       .then(images => {
-        if (images.hits.length !== 0) {
-          return this.setState(prevState => ({
-            images: [...prevState.images, ...images.hits],
-            status: 'resolved',
-            visibleButton: true,
-          }));
-        }
-        return Promise.reject(
-          new Error(`Ничего не найдено по запросу ${this.props.searchName}`)
-        );
+        this.setState(prevState => ({
+          images: [...prevState.images, ...images.hits],
+          status: 'resolved',
+          visibleButton: true,
+        }));
       })
       .catch(error => {
         this.setState({ error, status: 'rejected' });
@@ -148,3 +135,7 @@ export default class ImageGallery extends Component {
     }
   }
 }
+
+ImageGallery.propTypes = {
+  searchName: PropTypes.string.isRequired,
+};
