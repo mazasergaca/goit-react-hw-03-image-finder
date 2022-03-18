@@ -19,6 +19,7 @@ export default class ImageGallery extends Component {
     totalImages: null,
     visibleButton: true,
   };
+
   async componentDidUpdate(prevProps) {
     if (prevProps.searchName !== this.props.searchName) {
       await this.setState({ status: 'pending', page: 1 });
@@ -64,12 +65,12 @@ export default class ImageGallery extends Component {
         this.setState(prevState => ({
           images: [...prevState.images, ...images.hits],
           status: 'resolved',
-          visibleButton: true,
         }));
       })
       .catch(error => {
         this.setState({ error, status: 'rejected' });
-      });
+      })
+      .finally(() => this.setState({ visibleButton: true }));
 
     const { height: cardHeight } = document
       .querySelector('ul')
@@ -107,7 +108,7 @@ export default class ImageGallery extends Component {
               return (
                 <ImageGalleryItem
                   onClick={this.toggleModal}
-                  modalSrc={this.handleModalSrc}
+                  handleModalSrc={this.handleModalSrc}
                   key={article.id}
                   src={article.webformatURL}
                   alt={article.tags}
