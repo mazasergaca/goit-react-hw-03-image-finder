@@ -13,7 +13,7 @@ class Modal extends Component {
 
   handleKeyDown = e => {
     if (e.code === 'Escape' || e.currentTarget === e.target) {
-      return this.props.onClick();
+      return this.props.onClick('');
     }
   };
 
